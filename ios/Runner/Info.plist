@@ -66,5 +66,29 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+
+	<!-- Image Picker and Camera Permissions -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Campus Connect requires access to your photo library to select and upload event posters and photos.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Campus Connect requires access to your camera to capture photos for events.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Campus Connect requires access to your microphone when capturing event videos.</string>
+
+	<!-- URL Launcher Schemes (UPI Payments & External Links) -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>http</string>
+		<string>upi</string>
+		<string>gpay</string>
+		<string>phonepe</string>
+		<string>paytmmp</string>
+		<string>bhim</string>
+		<string>credpay</string>
+		<string>mailto</string>
+		<string>tel</string>
+		<string>sms</string>
+	</array>
 </dict>
 </plist>

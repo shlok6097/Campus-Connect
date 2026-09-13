@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/asset_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -91,10 +90,33 @@ class MyClubsScreen extends StatelessWidget {
               height: 56,
               decoration: BoxDecoration(
                 borderRadius: AppDimens.borderMd,
-                color: AppColors.surfaceContainerHigh,
+                color: AppColors.blueLight,
               ),
+              alignment: Alignment.center,
               clipBehavior: Clip.antiAlias,
-              child: Image.network(club.logoUrl, fit: BoxFit.cover),
+              child: club.logoUrl.isNotEmpty
+                  ? Image.network(
+                      club.logoUrl,
+                      width: 56,
+                      height: 56,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Text(
+                        club.name.isNotEmpty ? club.name[0].toUpperCase() : 'C',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.blue,
+                        ),
+                      ),
+                    )
+                  : Text(
+                      club.name.isNotEmpty ? club.name[0].toUpperCase() : 'C',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.blue,
+                      ),
+                    ),
             ),
             const SizedBox(width: AppDimens.md),
             Expanded(
@@ -135,10 +157,33 @@ class MyClubsScreen extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(
                 borderRadius: AppDimens.borderMd,
-                color: AppColors.surfaceContainerHigh,
+                color: AppColors.blueLight,
               ),
+              alignment: Alignment.center,
               clipBehavior: Clip.antiAlias,
-              child: Image.network(club.logoUrl, fit: BoxFit.cover),
+              child: club.logoUrl.isNotEmpty
+                  ? Image.network(
+                      club.logoUrl,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Text(
+                        club.name.isNotEmpty ? club.name[0].toUpperCase() : 'C',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.blue,
+                        ),
+                      ),
+                    )
+                  : Text(
+                      club.name.isNotEmpty ? club.name[0].toUpperCase() : 'C',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.blue,
+                      ),
+                    ),
             ),
             const SizedBox(width: AppDimens.md),
             Expanded(
@@ -175,16 +220,47 @@ class MyClubsScreen extends StatelessWidget {
                 Container(
                   width: 44,
                   height: 44,
-                  decoration: const BoxDecoration(shape: BoxShape.circle),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.blueLight,
+                  ),
+                  alignment: Alignment.center,
                   clipBehavior: Clip.antiAlias,
-                  child: Image.network(user.avatarUrl.isNotEmpty ? user.avatarUrl : AssetConstants.avatarRahul),
+                  child: user.avatarUrl.isNotEmpty
+                      ? Image.network(
+                          user.avatarUrl,
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Text(
+                            user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.blue,
+                            ),
+                          ),
+                        )
+                      : Text(
+                          user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.blue,
+                          ),
+                        ),
                 ),
                 const SizedBox(width: AppDimens.md),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(user.name, style: AppTextStyles.titleLarge.copyWith(fontSize: 15)),
-                    Text('${user.branch} • Sem ${user.semester}', style: AppTextStyles.bodySmall),
+                    Text(
+                      user.endingYear > 0
+                          ? '${user.branch} • Batch of ${user.endingYear}'
+                          : '${user.branch} • Sem ${user.semester}',
+                      style: AppTextStyles.bodySmall,
+                    ),
                   ],
                 ),
               ],

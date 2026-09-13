@@ -41,18 +41,15 @@ class TopAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
       titleSpacing: showBackButton || showLeadingAvatar ? 0 : AppDimens.marginMobile,
       leadingWidth: showBackButton || showLeadingAvatar ? 56 : 0,
       leading: _buildLeading(context),
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            title,
-            style: AppTextStyles.headlineSmall.copyWith(
-              color: AppColors.blue,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.3,
-            ),
-          ),
-        ],
+      title: Text(
+        title,
+        style: AppTextStyles.headlineSmall.copyWith(
+          color: AppColors.blue,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
       bottom: const PreferredSize(
         preferredSize: Size.fromHeight(1),

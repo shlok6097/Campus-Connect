@@ -24,6 +24,24 @@ class MockRepository {
   late List<GameModel> games;
 
   void _initData() {
+    currentUser = const UserModel(
+      id: '',
+      name: 'Student Member',
+      email: '',
+      accountType: AccountType.student,
+      role: UserRole.studentMember,
+    );
+
+    events = <EventModel>[];
+    registrations = <RegistrationModel>[];
+    teams = <TeamModel>[];
+    clubs = <ClubModel>[];
+    notes = <NoteModel>[];
+    leaderboard = <LeaderboardUser>[];
+    games = <GameModel>[];
+  }
+
+  void seedMockDataForTesting() {
     // Current User: Rahul Kumar
     currentUser = const UserModel(
       id: 'usr_rahul',
@@ -33,6 +51,8 @@ class MockRepository {
       studentId: 'UVCE21CS045',
       branch: 'Computer Science & Engineering',
       semester: 6,
+      accountType: AccountType.student,
+      role: UserRole.studentMember,
       avatarUrl: AssetConstants.avatarRahul,
       bio: 'Passionate Computer Science student with a strong interest in Artificial Intelligence and Machine Learning. I love solving complex problems and collaborating on innovative projects. Always eager to learn new technologies and build solutions that make an impact.',
       skills: ['Python', 'TensorFlow', 'React', 'Node.js', 'SQL', 'Git', 'Flutter'],

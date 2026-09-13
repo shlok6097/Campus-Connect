@@ -132,10 +132,33 @@ class ClubDetailsScreen extends StatelessWidget {
             height: 80,
             decoration: BoxDecoration(
               borderRadius: AppDimens.borderLg,
-              color: AppColors.surfaceContainerHigh,
+              color: AppColors.blueLight,
             ),
+            alignment: Alignment.center,
             clipBehavior: Clip.antiAlias,
-            child: Image.network(club.logoUrl, fit: BoxFit.cover),
+            child: club.logoUrl.isNotEmpty
+                ? Image.network(
+                    club.logoUrl,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => Text(
+                      club.name.isNotEmpty ? club.name[0].toUpperCase() : 'C',
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.blue,
+                      ),
+                    ),
+                  )
+                : Text(
+                    club.name.isNotEmpty ? club.name[0].toUpperCase() : 'C',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.blue,
+                    ),
+                  ),
           ),
           const SizedBox(width: AppDimens.md),
           Expanded(

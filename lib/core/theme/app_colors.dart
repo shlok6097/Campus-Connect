@@ -24,11 +24,12 @@ class AppColors {
   static const Color redContainer = Color(0xFFFFDAD6);
   static const Color redDark = Color(0xFFBA1A1A);
 
-  /// Orange: Highlights, points, prizes, rankings, important status badges
+  /// Orange / Yellow: Highlights, points, prizes, rankings, important status badges
   static const Color orange = Color(0xFFFFA700);
   static const Color orangeLight = Color(0xFFFFF3E0);
   static const Color orangeContainer = Color(0xFFFFDCC6);
   static const Color orangeDark = Color(0xFF8F4700);
+  static const Color yellow = Color(0xFFFFA700);
 
   /// White: Backgrounds, card surfaces, form inputs
   static const Color white = Color(0xFFFFFFFF);

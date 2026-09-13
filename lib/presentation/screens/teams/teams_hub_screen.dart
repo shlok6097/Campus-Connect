@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/asset_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -11,6 +10,8 @@ import '../../shared/chips/app_chips.dart';
 import '../../shared/headers/screen_header.dart';
 import '../../shared/headers/section_header.dart';
 import '../../shared/inputs/app_search_bar.dart';
+import '../../state/auth_controller.dart';
+import '../../state/srm_controller.dart';
 import '../../state/team_controller.dart';
 import 'team_workspace_screen.dart';
 import 'project_details_screen.dart';
@@ -302,14 +303,29 @@ class _TeamsHubScreenState extends State<TeamsHubScreen> {
   }
 
   Widget _buildFindTeammatesSection(BuildContext context) {
-    final students = [
-      {'name': 'Ananya Sharma', 'dept': 'ISE • Sem 6', 'skills': ['UI/UX', 'Figma', 'Flutter'], 'avatar': AssetConstants.avatarAnanya},
-      {'name': 'Kiran Patil', 'dept': 'ECE • Sem 6', 'skills': ['Python', 'TensorFlow', 'OpenCV'], 'avatar': AssetConstants.avatarKiran},
-      {'name': 'Priya Rao', 'dept': 'CSE • Sem 6', 'skills': ['Flutter', 'Node.js', 'Firebase'], 'avatar': AssetConstants.avatarPriya},
-    ];
+    final currentUserId = AuthController.instance.currentUser.id;
+    final students = SrmController.instance.availableStudents
+        .where((s) => s.id != currentUserId)
+        .toList();
+
+    if (students.isEmpty) {
+      return BentoCard(
+        padding: const EdgeInsets.all(AppDimens.lg),
+        child: Center(
+          child: Text(
+            'No peer profiles currently broadcasting availability.',
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+          ),
+        ),
+      );
+    }
 
     return Column(
       children: students.map((s) {
+        final dept = s.endingYear > 0
+            ? '${s.branch} • Batch ${s.endingYear}'
+            : (s.branch.isNotEmpty ? '${s.branch} • Sem ${s.semester}' : 'Student');
+
         return Padding(
           padding: const EdgeInsets.only(bottom: AppDimens.sm),
           child: BentoCard(
@@ -319,31 +335,60 @@ class _TeamsHubScreenState extends State<TeamsHubScreen> {
                 Container(
                   width: 48,
                   height: 48,
-                  decoration: const BoxDecoration(shape: BoxShape.circle),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.blueLight,
+                  ),
+                  alignment: Alignment.center,
                   clipBehavior: Clip.antiAlias,
-                  child: Image.network(s['avatar'] as String, fit: BoxFit.cover),
+                  child: s.avatarUrl.isNotEmpty
+                      ? Image.network(
+                          s.avatarUrl,
+                          width: 48,
+                          height: 48,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Text(
+                            s.name.isNotEmpty ? s.name[0].toUpperCase() : 'S',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.blue,
+                            ),
+                          ),
+                        )
+                      : Text(
+                          s.name.isNotEmpty ? s.name[0].toUpperCase() : 'S',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.blue,
+                          ),
+                        ),
                 ),
                 const SizedBox(width: AppDimens.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(s['name'] as String, style: AppTextStyles.titleLarge.copyWith(fontSize: 16)),
-                      Text(s['dept'] as String, style: AppTextStyles.bodySmall),
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 4,
-                        children: (s['skills'] as List<String>)
-                            .map((sk) => SkillChip(label: sk, backgroundColor: AppColors.surfaceContainerHigh))
-                            .toList(),
-                      ),
+                      Text(s.name, style: AppTextStyles.titleLarge.copyWith(fontSize: 16)),
+                      Text(dept, style: AppTextStyles.bodySmall),
+                      if (s.skills.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 4,
+                          children: s.skills
+                              .take(3)
+                              .map((sk) => SkillChip(label: sk, backgroundColor: AppColors.surfaceContainerHigh))
+                              .toList(),
+                        ),
+                      ],
                     ],
                   ),
                 ),
                 OutlinedButton(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Invited ${s['name']} to team')),
+                      SnackBar(content: Text('Invited ${s.name} to team')),
                     );
                   },
                   child: const Text('Invite'),

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/asset_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/event_model.dart';
+import '../../../data/models/user_model.dart';
 import '../../shared/buttons/primary_button.dart';
 import '../../shared/cards/bento_card.dart';
 import '../../shared/chips/app_chips.dart';
 import '../../shared/headers/section_header.dart';
 import '../../state/auth_controller.dart';
+import '../../state/club_controller.dart';
 import '../../state/event_controller.dart';
 import '../events/event_details_screen.dart';
 import '../notes/notes_home_screen.dart';
@@ -26,6 +27,7 @@ class StudentHomeScreen extends StatelessWidget {
       animation: Listenable.merge([
         AuthController.instance,
         EventController.instance,
+        ClubController.instance,
       ]),
       builder: (context, _) {
         final user = AuthController.instance.currentUser;
@@ -99,7 +101,7 @@ class StudentHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGreetingCard(user) {
+  Widget _buildGreetingCard(UserModel user) {
     return BentoCard(
       padding: const EdgeInsets.all(AppDimens.md),
       backgroundColor: AppColors.white,
@@ -110,17 +112,33 @@ class StudentHomeScreen extends StatelessWidget {
             height: 52,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.surfaceContainerHigh,
+              color: AppColors.blueLight,
             ),
+            alignment: Alignment.center,
             clipBehavior: Clip.antiAlias,
-            child: Image.network(
-              user.avatarUrl.isNotEmpty
-                  ? user.avatarUrl
-                  : AssetConstants.avatarRahul,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) =>
-                  const Icon(Icons.person, color: AppColors.blue, size: 28),
-            ),
+            child: user.avatarUrl.isNotEmpty
+                ? Image.network(
+                    user.avatarUrl,
+                    width: 52,
+                    height: 52,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => Text(
+                      user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.blue,
+                      ),
+                    ),
+                  )
+                : Text(
+                    user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.blue,
+                    ),
+                  ),
           ),
           const SizedBox(width: AppDimens.md),
           Expanded(
@@ -140,7 +158,9 @@ class StudentHomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${user.branch} • Sem ${user.semester}',
+                  user.endingYear > 0
+                      ? '${user.branch} • Batch of ${user.endingYear}'
+                      : '${user.branch} • Sem ${user.semester}',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -458,6 +478,18 @@ class StudentHomeScreen extends StatelessWidget {
     BuildContext context,
     List<EventModel> events,
   ) {
+    if (events.isEmpty) {
+      return BentoCard(
+        padding: const EdgeInsets.all(AppDimens.lg),
+        child: Center(
+          child: Text(
+            'No upcoming events scheduled right now. Check back soon!',
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: 225,
       child: ListView.separated(
@@ -551,31 +583,44 @@ class StudentHomeScreen extends StatelessWidget {
   }
 
   Widget _buildAnnouncementsSection() {
+    final clubs = ClubController.instance.allClubs;
+    final events = EventController.instance.allEvents;
+
     return BentoCard(
       padding: const EdgeInsets.all(AppDimens.lg),
       child: Column(
         children: [
-          _buildAnnouncementItem(
-            tag: 'GDG UVCE',
-            title: 'Registrations Open for Hackathon 2026',
-            time: '2 hours ago',
-            tagColor: AppColors.blue,
-          ),
+          if (clubs.isNotEmpty)
+            _buildAnnouncementItem(
+              tag: clubs.first.name,
+              title: clubs.first.description.isNotEmpty
+                  ? clubs.first.description
+                  : 'Active student organization. Join to collaborate on projects.',
+              time: 'Active',
+              tagColor: AppColors.blue,
+            )
+          else
+            _buildAnnouncementItem(
+              tag: 'SRM Portal',
+              title: 'Welcome to Campus Connect. Explore official clubs and activities.',
+              time: 'Today',
+              tagColor: AppColors.blue,
+            ),
           const Divider(height: AppDimens.lg),
-          _buildAnnouncementItem(
-            tag: 'Coding Club',
-            title: 'Weekly Problem Set #12 is now live in Technical Games',
-            time: 'Yesterday',
-            tagColor: AppColors.green,
-          ),
-          const Divider(height: AppDimens.lg),
-          _buildAnnouncementItem(
-            tag: 'Exam Cell',
-            title:
-                'Midterm schedule published. Check Lecture Notes for revision sheets.',
-            time: '3 days ago',
-            tagColor: AppColors.orangeDark,
-          ),
+          if (events.isNotEmpty)
+            _buildAnnouncementItem(
+              tag: events.first.category.name.toUpperCase(),
+              title: 'Registrations are open for ${events.first.title}',
+              time: events.first.timeString.isNotEmpty ? events.first.timeString : 'Upcoming',
+              tagColor: AppColors.green,
+            )
+          else
+            _buildAnnouncementItem(
+              tag: 'Academics',
+              title: 'Check Lecture Notes section to download and share course materials.',
+              time: 'Active',
+              tagColor: AppColors.green,
+            ),
         ],
       ),
     );

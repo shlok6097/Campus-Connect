@@ -34,36 +34,50 @@ class StatCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title.toUpperCase(),
-                style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.textSecondary,
-                  letterSpacing: 1.0,
+              Expanded(
+                child: Text(
+                  title.toUpperCase(),
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.5,
+                    fontSize: 10.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 4),
               Container(
                 padding: const EdgeInsets.all(AppDimens.xs + 2),
                 decoration: BoxDecoration(
                   color: iconColor.withOpacity(0.12),
                   borderRadius: AppDimens.borderSm,
                 ),
-                child: Icon(icon, size: 18, color: iconColor),
+                child: Icon(icon, size: 16, color: iconColor),
               ),
             ],
           ),
-          const SizedBox(height: AppDimens.sm),
+          const SizedBox(height: AppDimens.xs),
           Text(
             value,
             style: AppTextStyles.headlineMedium.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
+              fontSize: 22,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           if (subtitle != null) ...[
             const SizedBox(height: AppDimens.xs),
             Text(
               subtitle!,
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ],

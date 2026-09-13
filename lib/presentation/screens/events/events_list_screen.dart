@@ -109,6 +109,30 @@ class _EventsListScreenState extends State<EventsListScreen> {
                         onSelected: (cat) =>
                             EventController.instance.setCategoryFilter(cat),
                       ),
+                      const SizedBox(width: AppDimens.sm),
+                      CategoryFilterChip<EventCategory>(
+                        label: 'Sports',
+                        value: EventCategory.sports,
+                        selectedValue: selectedCat,
+                        onSelected: (cat) =>
+                            EventController.instance.setCategoryFilter(cat),
+                      ),
+                      const SizedBox(width: AppDimens.sm),
+                      CategoryFilterChip<EventCategory>(
+                        label: 'Competitions',
+                        value: EventCategory.competition,
+                        selectedValue: selectedCat,
+                        onSelected: (cat) =>
+                            EventController.instance.setCategoryFilter(cat),
+                      ),
+                      const SizedBox(width: AppDimens.sm),
+                      CategoryFilterChip<EventCategory>(
+                        label: 'Others',
+                        value: EventCategory.others,
+                        selectedValue: selectedCat,
+                        onSelected: (cat) =>
+                            EventController.instance.setCategoryFilter(cat),
+                      ),
                     ],
                   ),
                 ),

@@ -33,6 +33,9 @@ class AppTextStyles {
     color: AppColors.textPrimary,
   );
 
+  /// Display Small / Headline Medium (24px, 32px line-height, semi-bold)
+  static TextStyle displaySmall = headlineMedium;
+
   /// Headline Small (20px, 28px line-height, semi-bold)
   static TextStyle headlineSmall = GoogleFonts.inter(
     fontSize: 20,
@@ -45,6 +48,22 @@ class AppTextStyles {
   static TextStyle titleLarge = GoogleFonts.inter(
     fontSize: 18,
     height: 24 / 18,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
+
+  /// Title Medium (16px, 22px line-height, semi-bold)
+  static TextStyle titleMedium = GoogleFonts.inter(
+    fontSize: 16,
+    height: 22 / 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textPrimary,
+  );
+
+  /// Body Large (16px, 24px line-height, semi-bold)
+  static TextStyle bodyLarge = GoogleFonts.inter(
+    fontSize: 16,
+    height: 24 / 16,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
   );

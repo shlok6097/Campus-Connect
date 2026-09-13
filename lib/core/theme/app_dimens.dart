@@ -24,6 +24,7 @@ class AppDimens {
   static const double radiusXl = 16.0;
   static const double radius2Xl = 24.0;
   static const double radiusPill = 999.0;
+  static const double radiusFull = 999.0;
 
   static const BorderRadius borderSm = BorderRadius.all(Radius.circular(radiusSm));
   static const BorderRadius borderMd = BorderRadius.all(Radius.circular(radiusMd));

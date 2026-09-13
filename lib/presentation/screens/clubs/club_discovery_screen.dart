@@ -24,6 +24,14 @@ class _ClubDiscoveryScreenState extends State<ClubDiscoveryScreen> {
   final _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ClubController.instance.loadClubs();
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -34,118 +42,177 @@ class _ClubDiscoveryScreenState extends State<ClubDiscoveryScreen> {
     return AnimatedBuilder(
       animation: ClubController.instance,
       builder: (context, _) {
-        final clubs = ClubController.instance.filteredClubs;
-        final myClubs = ClubController.instance.myClubs;
-        final selectedCat = ClubController.instance.selectedCategory;
+        final clubCtrl = ClubController.instance;
+        final clubs = clubCtrl.filteredClubs;
+        final myClubs = clubCtrl.myClubs;
+        final selectedCat = clubCtrl.selectedCategory;
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppDimens.marginMobile,
-            vertical: AppDimens.lg,
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1000),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Expanded(
-                      child: ScreenHeader(
-                        title: 'Campus Clubs',
-                        subtitle: 'Discover, join, and lead student communities',
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const MyClubsScreen()),
-                        );
-                      },
-                      icon: const Icon(Icons.bookmark_outline, size: 18, color: AppColors.blue),
-                      label: Text('My Clubs (${myClubs.length})', style: AppTextStyles.labelMedium.copyWith(color: AppColors.blue)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppDimens.md),
-
-                // Search Bar
-                AppSearchBar(
-                  hint: 'Search clubs by name or domain...',
-                  controller: _searchController,
-                  onChanged: (val) => ClubController.instance.setSearchQuery(val),
-                ),
-                const SizedBox(height: AppDimens.md),
-
-                // Category Chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
+        return RefreshIndicator(
+          onRefresh: () => clubCtrl.loadClubs(),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimens.marginMobile,
+              vertical: AppDimens.lg,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      CategoryFilterChip<ClubCategory>(
-                        label: 'All Clubs',
-                        value: null,
-                        selectedValue: selectedCat,
-                        onSelected: (cat) => ClubController.instance.setCategoryFilter(cat),
+                      const Expanded(
+                        child: ScreenHeader(
+                          title: 'Campus Clubs',
+                          subtitle: 'Discover, join, and lead student communities',
+                        ),
                       ),
-                      const SizedBox(width: AppDimens.sm),
-                      CategoryFilterChip<ClubCategory>(
-                        label: 'Technical',
-                        value: ClubCategory.technical,
-                        selectedValue: selectedCat,
-                        onSelected: (cat) => ClubController.instance.setCategoryFilter(cat),
-                      ),
-                      const SizedBox(width: AppDimens.sm),
-                      CategoryFilterChip<ClubCategory>(
-                        label: 'Creative & Design',
-                        value: ClubCategory.creative,
-                        selectedValue: selectedCat,
-                        onSelected: (cat) => ClubController.instance.setCategoryFilter(cat),
-                      ),
-                      const SizedBox(width: AppDimens.sm),
-                      CategoryFilterChip<ClubCategory>(
-                        label: 'Cultural',
-                        value: ClubCategory.cultural,
-                        selectedValue: selectedCat,
-                        onSelected: (cat) => ClubController.instance.setCategoryFilter(cat),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const MyClubsScreen()),
+                          );
+                        },
+                        icon: const Icon(Icons.bookmark_outline, size: 18, color: AppColors.blue),
+                        label: Text(
+                          'My Clubs (${myClubs.length})',
+                          style: AppTextStyles.labelMedium.copyWith(color: AppColors.blue),
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: AppDimens.xl),
+                  const SizedBox(height: AppDimens.md),
 
-                // Featured Club
-                if (clubs.isNotEmpty) ...[
-                  SectionHeader(title: 'Featured Club', icon: Icons.star_outline),
-                  const SizedBox(height: AppDimens.sm),
-                  _buildFeaturedClubCard(context, clubs.first),
+                  // Search Bar
+                  AppSearchBar(
+                    hint: 'Search clubs by name or domain...',
+                    controller: _searchController,
+                    onChanged: (val) => clubCtrl.setSearchQuery(val),
+                  ),
+                  const SizedBox(height: AppDimens.md),
+
+                  // Category Chips
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        CategoryFilterChip<ClubCategory>(
+                          label: 'All Clubs',
+                          value: null,
+                          selectedValue: selectedCat,
+                          onSelected: (cat) => clubCtrl.setCategoryFilter(cat),
+                        ),
+                        const SizedBox(width: AppDimens.sm),
+                        CategoryFilterChip<ClubCategory>(
+                          label: 'Technical',
+                          value: ClubCategory.technical,
+                          selectedValue: selectedCat,
+                          onSelected: (cat) => clubCtrl.setCategoryFilter(cat),
+                        ),
+                        const SizedBox(width: AppDimens.sm),
+                        CategoryFilterChip<ClubCategory>(
+                          label: 'Cultural',
+                          value: ClubCategory.cultural,
+                          selectedValue: selectedCat,
+                          onSelected: (cat) => clubCtrl.setCategoryFilter(cat),
+                        ),
+                        const SizedBox(width: AppDimens.sm),
+                        CategoryFilterChip<ClubCategory>(
+                          label: 'Sports',
+                          value: ClubCategory.sports,
+                          selectedValue: selectedCat,
+                          onSelected: (cat) => clubCtrl.setCategoryFilter(cat),
+                        ),
+                        const SizedBox(width: AppDimens.sm),
+                        CategoryFilterChip<ClubCategory>(
+                          label: 'Academic',
+                          value: ClubCategory.academic,
+                          selectedValue: selectedCat,
+                          onSelected: (cat) => clubCtrl.setCategoryFilter(cat),
+                        ),
+                        const SizedBox(width: AppDimens.sm),
+                        CategoryFilterChip<ClubCategory>(
+                          label: 'Creative & Media',
+                          value: ClubCategory.creative,
+                          selectedValue: selectedCat,
+                          onSelected: (cat) => clubCtrl.setCategoryFilter(cat),
+                        ),
+                        const SizedBox(width: AppDimens.sm),
+                        CategoryFilterChip<ClubCategory>(
+                          label: 'Others',
+                          value: ClubCategory.others,
+                          selectedValue: selectedCat,
+                          onSelected: (cat) => clubCtrl.setCategoryFilter(cat),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: AppDimens.xl),
-                ],
 
-                // Discover More Grid
-                SectionHeader(title: 'Discover More Clubs', icon: Icons.explore_outlined),
-                const SizedBox(height: AppDimens.sm),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isDesktop = constraints.maxWidth > 600;
-                    return GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: isDesktop ? 2 : 1,
-                        crossAxisSpacing: AppDimens.md,
-                        mainAxisSpacing: AppDimens.md,
-                        childAspectRatio: isDesktop ? 1.4 : 1.35,
+                  // Loading State
+                  if (clubCtrl.isLoading && clubs.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  // Empty State
+                  else if (clubs.isEmpty)
+                    BentoCard(
+                      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.groups_outlined, size: 48, color: AppColors.outline),
+                            const SizedBox(height: AppDimens.md),
+                            Text(
+                              'No clubs found',
+                              style: AppTextStyles.titleLarge.copyWith(color: AppColors.textPrimary),
+                            ),
+                            const SizedBox(height: AppDimens.xs),
+                            Text(
+                              'Try selecting another category or clear search query.',
+                              style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
                       ),
-                      itemCount: clubs.length,
-                      itemBuilder: (ctx, index) => _buildClubGridItem(context, clubs[index]),
-                    );
-                  },
-                ),
-                const SizedBox(height: AppDimens.xxl),
-              ],
+                    )
+                  else ...[
+                    // Featured Club
+                    SectionHeader(title: 'Featured Club', icon: Icons.star_outline),
+                    const SizedBox(height: AppDimens.sm),
+                    _buildFeaturedClubCard(context, clubs.first),
+                    const SizedBox(height: AppDimens.xl),
+
+                    // Discover More Grid
+                    SectionHeader(title: 'Discover All Clubs (${clubs.length})', icon: Icons.explore_outlined),
+                    const SizedBox(height: AppDimens.sm),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isDesktop = constraints.maxWidth > 600;
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: isDesktop ? 2 : 1,
+                            crossAxisSpacing: AppDimens.md,
+                            mainAxisSpacing: AppDimens.md,
+                            childAspectRatio: isDesktop ? 1.4 : 1.35,
+                          ),
+                          itemCount: clubs.length,
+                          itemBuilder: (ctx, index) => _buildClubGridItem(context, clubs[index]),
+                        );
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: AppDimens.xxl),
+                ],
+              ),
             ),
           ),
         );
@@ -166,10 +233,33 @@ class _ClubDiscoveryScreenState extends State<ClubDiscoveryScreen> {
                 height: 60,
                 decoration: BoxDecoration(
                   borderRadius: AppDimens.borderLg,
-                  color: AppColors.surfaceContainerHigh,
+                  color: AppColors.blueLight,
                 ),
+                alignment: Alignment.center,
                 clipBehavior: Clip.antiAlias,
-                child: Image.network(club.logoUrl, fit: BoxFit.cover),
+                child: club.logoUrl.isNotEmpty
+                    ? Image.network(
+                        club.logoUrl,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Text(
+                          club.name.isNotEmpty ? club.name[0].toUpperCase() : 'C',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.blue,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        club.name.isNotEmpty ? club.name[0].toUpperCase() : 'C',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.blue,
+                        ),
+                      ),
               ),
               const SizedBox(width: AppDimens.md),
               Expanded(
@@ -195,8 +285,11 @@ class _ClubDiscoveryScreenState extends State<ClubDiscoveryScreen> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      club.tagline,
-                      style: AppTextStyles.bodySmall.copyWith(color: AppColors.blue, fontWeight: FontWeight.w600),
+                      club.tagline.isNotEmpty ? club.tagline : club.category.name.toUpperCase(),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.blue,
+                        fontWeight: FontWeight.w600,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -205,13 +298,15 @@ class _ClubDiscoveryScreenState extends State<ClubDiscoveryScreen> {
               ),
             ],
           ),
-          const SizedBox(height: AppDimens.md),
-          Text(
-            club.description,
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
+          if (club.description.isNotEmpty) ...[
+            const SizedBox(height: AppDimens.md),
+            Text(
+              club.description,
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
           const SizedBox(height: AppDimens.lg),
           Wrap(
             spacing: AppDimens.md,
@@ -220,7 +315,7 @@ class _ClubDiscoveryScreenState extends State<ClubDiscoveryScreen> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
-                '${club.upcomingActivities.length} upcoming workshops',
+                '${club.members.length} active member${club.members.length == 1 ? '' : 's'}',
                 style: AppTextStyles.labelMedium.copyWith(color: AppColors.greenDark),
               ),
               PrimaryButton(
@@ -260,10 +355,33 @@ class _ClubDiscoveryScreenState extends State<ClubDiscoveryScreen> {
                 height: 48,
                 decoration: BoxDecoration(
                   borderRadius: AppDimens.borderMd,
-                  color: AppColors.surfaceContainerHigh,
+                  color: AppColors.blueLight,
                 ),
+                alignment: Alignment.center,
                 clipBehavior: Clip.antiAlias,
-                child: Image.network(club.logoUrl, fit: BoxFit.cover),
+                child: club.logoUrl.isNotEmpty
+                    ? Image.network(
+                        club.logoUrl,
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Text(
+                          club.name.isNotEmpty ? club.name[0].toUpperCase() : 'C',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.blue,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        club.name.isNotEmpty ? club.name[0].toUpperCase() : 'C',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.blue,
+                        ),
+                      ),
               ),
               const SizedBox(width: AppDimens.sm + 2),
               Expanded(
@@ -287,7 +405,7 @@ class _ClubDiscoveryScreenState extends State<ClubDiscoveryScreen> {
           ),
           const SizedBox(height: AppDimens.xs),
           Text(
-            club.description,
+            club.description.isNotEmpty ? club.description : 'Official campus student organization.',
             style: AppTextStyles.bodySmall,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

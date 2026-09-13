@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text_styles.dart';
-import 'login_screen.dart';
+import '../../state/auth_controller.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -29,15 +30,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
 
-    _timer = Timer(const Duration(milliseconds: 2200), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (_, _, _) => const LoginScreen(),
-            transitionsBuilder: (_, a, _, c) => FadeTransition(opacity: a, child: c),
-            transitionDuration: const Duration(milliseconds: 400),
-          ),
-        );
+    _initAppAndRoute();
+  }
+
+  Future<void> _initAppAndRoute() async {
+    // Attempt session restoration in parallel with splash animation
+    final sessionRestored = await AuthController.instance.restoreSession();
+
+    _timer = Timer(const Duration(milliseconds: 1800), () {
+      if (!mounted) return;
+
+      if (sessionRestored && AuthController.instance.isAuthenticated) {
+        final user = AuthController.instance.currentUser;
+        final targetRoute = AppRoutes.getDashboardRoute(user);
+        Navigator.of(context).pushReplacementNamed(targetRoute);
+      } else {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.login);
       }
     });
   }

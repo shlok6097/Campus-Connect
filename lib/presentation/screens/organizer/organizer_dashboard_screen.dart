@@ -10,6 +10,7 @@ import '../../shared/cards/stat_card.dart';
 import '../../shared/chips/app_chips.dart';
 import '../../shared/headers/screen_header.dart';
 import '../../shared/headers/section_header.dart';
+import '../../state/auth_controller.dart';
 import '../../state/club_controller.dart';
 import '../../state/event_controller.dart';
 import 'create_event_screen.dart';
@@ -31,10 +32,12 @@ class OrganizerDashboardScreen extends StatelessWidget {
       builder: (context, _) {
         final events = EventController.instance.allEvents;
         final registrations = EventController.instance.allRegistrations;
-        final totalMembers = ClubController.instance.allClubs.fold<int>(
-          0,
-          (sum, c) => sum + c.memberCount,
-        );
+        final user = AuthController.instance.currentUser;
+        final myClub = ClubController.instance.allClubs
+            .where((c) => c.id == user.clubId)
+            .firstOrNull;
+        final myClubMembers = myClub?.memberCount ??
+            ClubController.instance.allClubs.fold<int>(0, (sum, c) => sum + c.memberCount);
 
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
@@ -91,18 +94,18 @@ class OrganizerDashboardScreen extends StatelessWidget {
                           value: '${events.length}',
                           icon: Icons.event,
                           iconColor: AppColors.blue,
-                          subtitle: '+2 this month',
+                          subtitle: '${events.where((e) => e.isPublished).length} published',
                         ),
                         StatCard(
                           title: 'Club Members',
-                          value: '$totalMembers',
+                          value: '$myClubMembers',
                           icon: Icons.groups,
                           iconColor: AppColors.green,
-                          subtitle: 'Active across 4 clubs',
+                          subtitle: myClub != null ? myClub.name : 'All registered',
                         ),
                         StatCard(
                           title: 'Registrations',
-                          value: '${registrations.length * 5 + 38}',
+                          value: '${registrations.length}',
                           icon: Icons.how_to_reg,
                           iconColor: AppColors.orangeDark,
                           subtitle: 'Total tickets issued',
@@ -137,15 +140,45 @@ class OrganizerDashboardScreen extends StatelessWidget {
                   onAction: () => onNavigateTab?.call(1),
                 ),
                 const SizedBox(height: AppDimens.sm),
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: events.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(height: AppDimens.md),
-                  itemBuilder: (ctx, index) =>
-                      _buildManagedEventCard(context, events[index]),
-                ),
+                if (events.isEmpty)
+                  BentoCard(
+                    padding: const EdgeInsets.all(AppDimens.xl),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.event_note_outlined,
+                            size: 40,
+                            color: AppColors.outline,
+                          ),
+                          const SizedBox(height: AppDimens.sm),
+                          Text(
+                            'No events managed yet',
+                            style: AppTextStyles.titleLarge.copyWith(fontSize: 16),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Tap Create Event to launch your first workshop or competition.',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: events.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: AppDimens.md),
+                    itemBuilder: (ctx, index) =>
+                        _buildManagedEventCard(context, events[index]),
+                  ),
                 const SizedBox(height: AppDimens.xxl),
               ],
             ),
@@ -233,7 +266,7 @@ class OrganizerDashboardScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(AppDimens.sm),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               borderRadius: AppDimens.borderMd,
             ),
             child: Icon(icon, size: 22, color: color),
@@ -272,7 +305,17 @@ class OrganizerDashboardScreen extends StatelessWidget {
               color: AppColors.surfaceContainerHigh,
             ),
             clipBehavior: Clip.antiAlias,
-            child: Image.network(event.bannerUrl, fit: BoxFit.cover),
+            child: event.bannerUrl.isNotEmpty
+                ? Image.network(
+                    event.bannerUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => const Center(
+                      child: Icon(Icons.event, color: AppColors.blue),
+                    ),
+                  )
+                : const Center(
+                    child: Icon(Icons.event, color: AppColors.blue),
+                  ),
           ),
           const SizedBox(width: AppDimens.md),
           Expanded(
@@ -281,10 +324,14 @@ class OrganizerDashboardScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      event.title,
-                      style: AppTextStyles.titleLarge.copyWith(
-                        fontWeight: FontWeight.w700,
+                    Expanded(
+                      child: Text(
+                        event.title,
+                        style: AppTextStyles.titleLarge.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -295,10 +342,13 @@ class OrganizerDashboardScreen extends StatelessWidget {
                 Text(
                   '${event.registeredCount} / ${event.maxParticipants} Registrations • ${Formatters.formatDate(event.startDate)}',
                   style: AppTextStyles.bodySmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           OutlinedButton(
             onPressed: () {
               Navigator.of(context).push(

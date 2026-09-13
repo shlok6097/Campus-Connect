@@ -95,7 +95,7 @@ class AppBottomNavBar extends StatelessWidget {
     final items = [
       const _NavItem(icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard, label: 'Dashboard'),
       const _NavItem(icon: Icons.calendar_today_outlined, activeIcon: Icons.calendar_today, label: 'Events'),
-      const _NavItem(icon: Icons.bar_chart_outlined, activeIcon: Icons.bar_chart, label: 'Responses'),
+      const _NavItem(icon: Icons.post_add_outlined, activeIcon: Icons.post_add, label: 'Publish'),
       const _NavItem(icon: Icons.group_outlined, activeIcon: Icons.group, label: 'Members'),
     ];
 

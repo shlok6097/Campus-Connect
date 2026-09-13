@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_dimens.dart';
+import '../../../data/models/club_model.dart';
 import '../../shared/navigation/app_bottom_nav_bar.dart';
 import '../../shared/navigation/top_app_bar_widget.dart';
 import '../../state/auth_controller.dart';
 import '../../state/club_controller.dart';
+import '../club/club_events_screen.dart';
+import '../club/publish_hub_screen.dart';
 import '../clubs/club_members_screen.dart';
-import '../events/events_list_screen.dart';
-import '../student/student_shell_screen.dart';
 import 'organizer_dashboard_screen.dart';
-import 'registration_responses_screen.dart';
+
+typedef ClubShellScreen = OrganizerShellScreen;
 
 class OrganizerShellScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -32,28 +36,69 @@ class _OrganizerShellScreenState extends State<OrganizerShellScreen> {
     setState(() => _currentIndex = index);
   }
 
+  void _handleLogout() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.white,
+        shape: RoundedRectangleBorder(borderRadius: AppDimens.borderLg),
+        title: const Text('Log Out'),
+        content: const Text('Are you sure you want to log out of the Club Dashboard?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await AuthController.instance.logout();
+              if (mounted) {
+                Navigator.of(context).pushNamedAndRemoveUntil(
+                  AppRoutes.login,
+                  (route) => false,
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.red,
+              foregroundColor: AppColors.white,
+            ),
+            child: const Text('Log Out'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final codingClub = ClubController.instance.allClubs.first;
+    final user = AuthController.instance.currentUser;
+    final codingClub = ClubController.instance.allClubs
+            .where((c) => c.id == user.clubId)
+            .firstOrNull ??
+        ClubController.instance.allClubs.firstOrNull ??
+        ClubModel(
+          id: user.clubId ?? 'club_default',
+          name: user.clubName ?? 'My Club',
+          tagline: 'Club Management Portal',
+          description: 'Official Club Portal',
+          category: ClubCategory.technical,
+          logoUrl: '',
+        );
+    final title = user.clubName ?? 'Club Manager';
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: TopAppBarWidget(
-        title: 'Club Manager',
+        title: title,
+        avatarUrl: user.avatarUrl,
         showLeadingAvatar: true,
         actions: [
-          TextButton.icon(
-            onPressed: () {
-              AuthController.instance.loginStudent(
-                email: 'rahul.kumar@uvce.edu',
-                password: 'password',
-              );
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const StudentShellScreen()),
-              );
-            },
-            icon: const Icon(Icons.swap_horiz, size: 16, color: AppColors.blue),
-            label: const Text('Student View', style: TextStyle(color: AppColors.blue, fontSize: 12)),
+          IconButton(
+            tooltip: 'Log Out',
+            icon: const Icon(Icons.logout, color: AppColors.red, size: 20),
+            onPressed: _handleLogout,
           ),
         ],
       ),
@@ -61,8 +106,8 @@ class _OrganizerShellScreenState extends State<OrganizerShellScreen> {
         index: _currentIndex,
         children: [
           OrganizerDashboardScreen(onNavigateTab: _onTabChanged),
-          const EventsListScreen(),
-          const RegistrationResponsesScreen(),
+          const ClubEventsScreen(),
+          const PublishHubScreen(),
           ClubMembersScreen(club: codingClub),
         ],
       ),
