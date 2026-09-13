@@ -49,23 +49,54 @@ class ClubController extends ChangeNotifier {
 
     try {
       final client = SupabaseService.instance.client;
-      final currentUserId = AuthController.instance.currentUser.id;
+      final authUser = client.auth.currentUser;
+      final currentUserId = (authUser?.id != null && authUser!.id.isNotEmpty)
+          ? authUser.id
+          : AuthController.instance.currentUser.id;
 
-      dynamic data;
+      dynamic clubsData;
+      List<dynamic> allMembers = [];
+
       try {
-        data = await client
+        clubsData = await client
             .from('clubs')
             .select('*, club_members(user_id, role, privileges, profiles(full_name, email, usn, branch, semester, avatar_url))')
             .order('created_at', ascending: false);
-      } catch (_) {
-        // Fallback to simpler query if nested relations fail
-        data = await client
+      } catch (nestedErr) {
+        debugPrint('[LOAD_CLUBS_DEBUG] Nested join failed ($nestedErr), executing robust separate fetch...');
+        clubsData = await client
             .from('clubs')
             .select('*')
             .order('created_at', ascending: false);
+
+        try {
+          allMembers = await client
+              .from('club_members')
+              .select('*, profiles(full_name, email, usn, branch, semester, avatar_url)');
+        } catch (_) {
+          try {
+            allMembers = await client.from('club_members').select('*');
+          } catch (_) {}
+        }
       }
 
-      final List<dynamic> list = (data as List<dynamic>?) ?? [];
+      final List<dynamic> list = (clubsData as List<dynamic>?) ?? [];
+
+      // If separate fetch was executed, merge club_members into each club map
+      if (allMembers.isNotEmpty) {
+        final Map<String, List<dynamic>> membersByClub = {};
+        for (final m in allMembers) {
+          final cId = (m['club_id'] ?? '').toString();
+          membersByClub.putIfAbsent(cId, () => []).add(m);
+        }
+        for (final clubJson in list) {
+          if (clubJson is Map<String, dynamic>) {
+            final cId = (clubJson['id'] ?? '').toString();
+            clubJson['club_members'] = membersByClub[cId] ?? [];
+          }
+        }
+      }
+
       _clubs = list.map((item) {
         return ClubModel.fromJson(
           item as Map<String, dynamic>,
@@ -73,11 +104,17 @@ class ClubController extends ChangeNotifier {
         );
       }).toList();
 
+      debugPrint('[LOAD_CLUBS_DEBUG] Loaded ${_clubs.length} clubs:');
+      for (final c in _clubs) {
+        debugPrint('  • ${c.name}: ${c.memberCount} followers (isJoined: ${c.isUserJoined}, role: ${c.userRole})');
+      }
+
       _isLoading = false;
       notifyListeners();
     } catch (e) {
       _isLoading = false;
       _errorMessage = 'Failed to load clubs: $e';
+      debugPrint('[LOAD_CLUBS_DEBUG] Failed to load clubs: $e');
       notifyListeners();
     }
   }
@@ -92,8 +129,21 @@ class ClubController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> joinClub(String clubId) async {
-    final currentUserId = AuthController.instance.currentUser.id;
+  Future<bool> joinClub(String clubId) async {
+    final authUser = SupabaseService.instance.isInitialized
+        ? SupabaseService.instance.client.auth.currentUser
+        : null;
+    final currentUserId = (authUser?.id != null && authUser!.id.isNotEmpty)
+        ? authUser.id
+        : AuthController.instance.currentUser.id;
+
+    debugPrint('════════════════════════════════════════════════════════════════');
+    debugPrint('[FOLLOW_DEBUG] ▶ joinClub() CALLED');
+    debugPrint('[FOLLOW_DEBUG]   Club ID: $clubId');
+    debugPrint('[FOLLOW_DEBUG]   Current User ID: $currentUserId');
+    debugPrint('[FOLLOW_DEBUG]   Auth User Email: ${authUser?.email ?? AuthController.instance.currentUser.email}');
+    debugPrint('[FOLLOW_DEBUG]   Supabase Initialized: ${SupabaseService.instance.isInitialized}');
+    debugPrint('════════════════════════════════════════════════════════════════');
 
     final index = _clubs.indexWhere((c) => c.id == clubId);
     if (index != -1) {
@@ -104,22 +154,104 @@ class ClubController extends ChangeNotifier {
         memberCount: club.memberCount + 1,
       );
       notifyListeners();
+      debugPrint('[FOLLOW_DEBUG]   ✓ Optimistic local state updated (+1). New count: ${_clubs[index].memberCount}');
     } else if (!SupabaseService.instance.isInitialized) {
       MockRepository.instance.joinClub(clubId);
       notifyListeners();
+      debugPrint('[FOLLOW_DEBUG]   ✓ MockRepository state updated.');
     }
 
-    if (SupabaseService.instance.isInitialized) {
+    if (SupabaseService.instance.isInitialized && currentUserId.isNotEmpty) {
       try {
         final client = SupabaseService.instance.client;
-        await client.from('club_members').upsert({
+        final payload = {
           'club_id': clubId,
           'user_id': currentUserId,
           'role': 'member',
           'privileges': ['view_events'],
-        });
-      } catch (_) {}
+        };
+        debugPrint('[FOLLOW_DEBUG]   → Writing to Supabase public.club_members: $payload');
+
+        final response = await client.from('club_members').upsert(
+          payload,
+          onConflict: 'club_id,user_id',
+        ).select();
+
+        debugPrint('[FOLLOW_DEBUG]   ✓ Supabase response: $response');
+        debugPrint('[FOLLOW_DEBUG]   → Reloading clubs from Supabase to sync live follower counts...');
+
+        await loadClubs();
+
+        final updatedClub = _clubs.firstWhere((c) => c.id == clubId, orElse: () => _clubs.first);
+        debugPrint('[FOLLOW_DEBUG]   ✓ Database sync complete! Active followers in DB: ${updatedClub.memberCount}');
+        debugPrint('════════════════════════════════════════════════════════════════');
+        return true;
+      } catch (e, stack) {
+        debugPrint('[FOLLOW_DEBUG]   ✗ ERROR writing follow/membership to DB: $e');
+        debugPrint('[FOLLOW_DEBUG]   Stack: $stack');
+        debugPrint('════════════════════════════════════════════════════════════════');
+        return false;
+      }
+    } else {
+      debugPrint('[FOLLOW_DEBUG]   ⚠ Skipped Supabase write: Supabase init=${SupabaseService.instance.isInitialized}, userIdEmpty=${currentUserId.isEmpty}');
+      return true;
     }
+  }
+
+  Future<bool> leaveClub(String clubId) async {
+    final authUser = SupabaseService.instance.isInitialized
+        ? SupabaseService.instance.client.auth.currentUser
+        : null;
+    final currentUserId = (authUser?.id != null && authUser!.id.isNotEmpty)
+        ? authUser.id
+        : AuthController.instance.currentUser.id;
+
+    debugPrint('════════════════════════════════════════════════════════════════');
+    debugPrint('[FOLLOW_DEBUG] ▶ leaveClub() CALLED');
+    debugPrint('[FOLLOW_DEBUG]   Club ID: $clubId');
+    debugPrint('[FOLLOW_DEBUG]   Current User ID: $currentUserId');
+    debugPrint('════════════════════════════════════════════════════════════════');
+
+    final index = _clubs.indexWhere((c) => c.id == clubId);
+    if (index != -1) {
+      final club = _clubs[index];
+      _clubs[index] = club.copyWith(
+        isUserJoined: false,
+        userRole: 'None',
+        memberCount: (club.memberCount > 0) ? club.memberCount - 1 : 0,
+        members: club.members.where((m) => m.id != currentUserId).toList(),
+      );
+      notifyListeners();
+      debugPrint('[FOLLOW_DEBUG]   ✓ Optimistic local state updated (-1). New count: ${_clubs[index].memberCount}');
+    }
+
+    if (SupabaseService.instance.isInitialized && currentUserId.isNotEmpty) {
+      try {
+        final client = SupabaseService.instance.client;
+        debugPrint('[FOLLOW_DEBUG]   → Deleting row from public.club_members (club_id=$clubId, user_id=$currentUserId)...');
+
+        await client
+            .from('club_members')
+            .delete()
+            .eq('club_id', clubId)
+            .eq('user_id', currentUserId);
+
+        debugPrint('[FOLLOW_DEBUG]   ✓ Row deleted from Supabase. Reloading clubs...');
+
+        await loadClubs();
+
+        final updatedClub = _clubs.firstWhere((c) => c.id == clubId, orElse: () => _clubs.first);
+        debugPrint('[FOLLOW_DEBUG]   ✓ Unfollow sync complete! Active followers in DB: ${updatedClub.memberCount}');
+        debugPrint('════════════════════════════════════════════════════════════════');
+        return true;
+      } catch (e, stack) {
+        debugPrint('[FOLLOW_DEBUG]   ✗ ERROR deleting from DB: $e');
+        debugPrint('[FOLLOW_DEBUG]   Stack: $stack');
+        debugPrint('════════════════════════════════════════════════════════════════');
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<void> addMemberToClub(String clubId, ClubMemberItem member) async {
@@ -144,8 +276,12 @@ class ClubController extends ChangeNotifier {
           'user_id': member.id,
           'role': member.role,
           'privileges': member.privileges,
-        });
-      } catch (_) {}
+        }, onConflict: 'club_id,user_id');
+
+        await loadClubs();
+      } catch (e) {
+        debugPrint('Error adding member to DB: $e');
+      }
     }
   }
 
@@ -171,7 +307,11 @@ class ClubController extends ChangeNotifier {
             .delete()
             .eq('club_id', clubId)
             .eq('user_id', memberId);
-      } catch (_) {}
+
+        await loadClubs();
+      } catch (e) {
+        debugPrint('Error removing member from DB: $e');
+      }
     }
   }
 

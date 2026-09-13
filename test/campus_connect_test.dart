@@ -85,11 +85,18 @@ void main() {
       expect(teamCtrl.myTeam.project?.title, 'Smart UVCE Campus Map');
     });
 
-    test('ClubController join and leave club memberships', () {
+    test('ClubController join and leave club memberships', () async {
       final clubCtrl = ClubController.instance;
       final firstClub = clubCtrl.allClubs.first;
-      clubCtrl.joinClub(firstClub.id);
+      final initialCount = firstClub.memberCount;
+
+      await clubCtrl.joinClub(firstClub.id);
       expect(clubCtrl.myClubs.any((c) => c.id == firstClub.id), true);
+      expect(clubCtrl.allClubs.firstWhere((c) => c.id == firstClub.id).memberCount, initialCount + 1);
+
+      await clubCtrl.leaveClub(firstClub.id);
+      expect(clubCtrl.myClubs.any((c) => c.id == firstClub.id), false);
+      expect(clubCtrl.allClubs.firstWhere((c) => c.id == firstClub.id).memberCount, initialCount);
     });
 
     test('NoteController search and contribute notes', () {

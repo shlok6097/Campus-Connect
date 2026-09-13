@@ -132,6 +132,11 @@ class MyClubsScreen extends StatelessWidget {
                       Text(club.userRole, style: AppTextStyles.bodySmall.copyWith(color: AppColors.blue, fontWeight: FontWeight.w600)),
                       const SizedBox(width: 8),
                       StatusBadge.info(club.category.name.toUpperCase()),
+                      const SizedBox(width: 8),
+                      Text(
+                        '• ${club.memberCount} Following',
+                        style: AppTextStyles.bodySmall.copyWith(fontSize: 11, color: AppColors.textSecondary),
+                      ),
                     ],
                   ),
                 ],
@@ -270,12 +275,21 @@ class MyClubsScreen extends StatelessWidget {
           PrimaryButton(
             label: 'Confirm Join',
             backgroundColor: AppColors.green,
-            onPressed: () {
-              ClubController.instance.joinClub(club.id);
+            onPressed: () async {
               Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Successfully joined ${club.name}! 🎉')),
-              );
+              final success = await ClubController.instance.joinClub(club.id);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? 'Successfully joined ${club.name}! 🎉'
+                          : 'Failed to record follow in DB. Check debug console.',
+                    ),
+                    backgroundColor: success ? AppColors.green : AppColors.red,
+                  ),
+                );
+              }
             },
           ),
         ],

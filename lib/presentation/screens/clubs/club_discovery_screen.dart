@@ -280,7 +280,7 @@ class _ClubDiscoveryScreenState extends State<ClubDiscoveryScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        StatusBadge.info('${club.memberCount} Members'),
+                        StatusBadge.info('${club.memberCount} Students Following'),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -314,9 +314,19 @@ class _ClubDiscoveryScreenState extends State<ClubDiscoveryScreen> {
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Text(
-                '${club.members.length} active member${club.members.length == 1 ? '' : 's'}',
-                style: AppTextStyles.labelMedium.copyWith(color: AppColors.greenDark),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.people, size: 16, color: AppColors.greenDark),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${club.memberCount} student${club.memberCount == 1 ? '' : 's'} following',
+                    style: AppTextStyles.labelMedium.copyWith(
+                      color: AppColors.greenDark,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
               PrimaryButton(
                 label: 'View Club & Activities',
@@ -394,9 +404,24 @@ class _ClubDiscoveryScreenState extends State<ClubDiscoveryScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
-                      '${club.memberCount} Members • ${club.category.name.toUpperCase()}',
-                      style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(Icons.people_outline, size: 13, color: AppColors.blue),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '${club.memberCount} Students Following',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontSize: 11,
+                              color: AppColors.blue,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -414,7 +439,7 @@ class _ClubDiscoveryScreenState extends State<ClubDiscoveryScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               if (club.isUserJoined)
-                StatusBadge.success('Joined')
+                StatusBadge.success('Following')
               else
                 Text('Open to Join', style: AppTextStyles.labelMedium.copyWith(color: AppColors.blue)),
               const Icon(Icons.arrow_forward, size: 16, color: AppColors.blue),

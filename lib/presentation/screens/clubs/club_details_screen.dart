@@ -171,34 +171,97 @@ class ClubDetailsScreen extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Row(
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     StatusBadge.info(club.category.name.toUpperCase()),
-                    const SizedBox(width: 8),
-                    Text(
-                      '• ${club.memberCount} Members',
-                      style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.people, size: 14, color: AppColors.blue),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${club.memberCount} Students Following',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.blue,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
                 const SizedBox(height: AppDimens.md),
-                PrimaryButton(
-                  label: club.isUserJoined ? 'Joined as ${club.userRole}' : 'Join Club',
-                  icon: club.isUserJoined ? Icons.check : Icons.group_add,
-                  isFullWidth: false,
-                  backgroundColor: club.isUserJoined ? AppColors.blue : AppColors.green,
-                  onPressed: club.isUserJoined
-                      ? null
-                      : () {
-                          ClubController.instance.joinClub(club.id);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Joined ${club.name}! 🎉')),
-                          );
-                        },
+                Row(
+                  children: [
+                    PrimaryButton(
+                      label: club.isUserJoined ? 'Following (${club.userRole})' : 'Follow & Join Club',
+                      icon: club.isUserJoined ? Icons.check_circle : Icons.group_add,
+                      isFullWidth: false,
+                      backgroundColor: club.isUserJoined ? AppColors.blue : AppColors.green,
+                      onPressed: club.isUserJoined
+                          ? () {
+                              _showLeaveConfirmation(context, club);
+                            }
+                          : () async {
+                              final success = await ClubController.instance.joinClub(club.id);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      success
+                                          ? 'Now following ${club.name}! 🎉'
+                                          : 'Failed to record follow in DB. Check debug console.',
+                                    ),
+                                    backgroundColor: success ? AppColors.green : AppColors.red,
+                                  ),
+                                );
+                              }
+                            },
+                    ),
+                  ],
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLeaveConfirmation(BuildContext context, ClubModel club) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Unfollow ${club.name}?'),
+        content: const Text('You will stop receiving updates and membership notifications for this club.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.red),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final success = await ClubController.instance.leaveClub(club.id);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? 'Unfollowed ${club.name}'
+                          : 'Failed to unfollow in DB. Check debug console.',
+                    ),
+                    backgroundColor: success ? AppColors.textPrimary : AppColors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Unfollow', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

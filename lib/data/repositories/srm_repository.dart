@@ -231,7 +231,7 @@ class SrmRepository {
           'club_id': clubId,
           'user_id': leaderUserId,
           'role': 'club_leader',
-        });
+        }, onConflict: 'club_id,user_id');
       } catch (_) {}
 
       // 3. Update leader's profile with club assignment
