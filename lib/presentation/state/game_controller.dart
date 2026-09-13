@@ -20,7 +20,21 @@ class GameController extends ChangeNotifier {
 
   GameCategory? get selectedCategory => _selectedCategory;
   List<GameModel> get games => _repo.games;
-  GameModel get codeDebugger => _repo.games.firstWhere((g) => g.id == 'game_debugger');
+  GameModel get codeDebugger {
+    if (_repo.games.isEmpty) {
+      return const GameModel(
+        id: 'game_debugger',
+        title: 'Code Debugger',
+        subtitle: 'Find and fix logic errors in 60s',
+        category: GameCategory.coding,
+        difficulty: 'Medium',
+      );
+    }
+    return _repo.games.firstWhere(
+      (g) => g.id == 'game_debugger',
+      orElse: () => _repo.games.first,
+    );
+  }
 
   int get currentQuestionIndex => _currentQuestionIndex;
   int? get selectedOptionIndex => _selectedOptionIndex;

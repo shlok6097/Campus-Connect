@@ -51,12 +51,21 @@ class ClubController extends ChangeNotifier {
       final client = SupabaseService.instance.client;
       final currentUserId = AuthController.instance.currentUser.id;
 
-      final data = await client
-          .from('clubs')
-          .select('*, club_members(user_id, role, privileges, profiles(full_name, email, usn, branch, semester, avatar_url))')
-          .order('created_at', ascending: false);
+      dynamic data;
+      try {
+        data = await client
+            .from('clubs')
+            .select('*, club_members(user_id, role, privileges, profiles(full_name, email, usn, branch, semester, avatar_url))')
+            .order('created_at', ascending: false);
+      } catch (_) {
+        // Fallback to simpler query if nested relations fail
+        data = await client
+            .from('clubs')
+            .select('*')
+            .order('created_at', ascending: false);
+      }
 
-      final List<dynamic> list = data as List<dynamic>;
+      final List<dynamic> list = (data as List<dynamic>?) ?? [];
       _clubs = list.map((item) {
         return ClubModel.fromJson(
           item as Map<String, dynamic>,

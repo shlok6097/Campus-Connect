@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/services/auth_service.dart';
 import '../../data/models/auth_session_model.dart';
 import '../../data/models/user_model.dart';
+import 'club_controller.dart';
+import 'event_controller.dart';
 
 class AuthController extends ChangeNotifier {
   static final AuthController instance = AuthController._internal();
@@ -86,6 +88,8 @@ class AuthController extends ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
+      ClubController.instance.loadClubs();
+      EventController.instance.loadEvents();
       return true;
     } on AuthException catch (e) {
       _isLoading = false;
@@ -141,6 +145,8 @@ class AuthController extends ChangeNotifier {
       _successMessage = 'Account created successfully!';
       _isLoading = false;
       notifyListeners();
+      ClubController.instance.loadClubs();
+      EventController.instance.loadEvents();
       return true;
     } on AuthException catch (e) {
       _isLoading = false;
@@ -163,6 +169,8 @@ class AuthController extends ChangeNotifier {
         _currentUser = session.user;
         _currentSession = session;
         notifyListeners();
+        ClubController.instance.loadClubs();
+        EventController.instance.loadEvents();
         return true;
       } else {
         _currentUser = null;

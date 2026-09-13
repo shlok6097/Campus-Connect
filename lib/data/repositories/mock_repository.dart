@@ -38,7 +38,104 @@ class MockRepository {
     clubs = <ClubModel>[];
     notes = <NoteModel>[];
     leaderboard = <LeaderboardUser>[];
-    games = <GameModel>[];
+    games = _buildDefaultGames();
+  }
+
+  static List<GameModel> _buildDefaultGames() {
+    return [
+      const GameModel(
+        id: 'game_debugger',
+        title: 'Code Debugger',
+        subtitle: 'Find and fix logic errors in 60s',
+        category: GameCategory.coding,
+        difficulty: 'Medium',
+        playerCount: 142,
+        timeLimitSeconds: 60,
+        icon: 'bug_report',
+        questions: [
+          GameQuestion(
+            id: 'q1',
+            title: 'Identify the Memory / Logic Bug',
+            prompt: 'In this Python binary search implementation, which line causes an infinite loop when the target is not present in the array?',
+            codeSnippet: '''def binary_search(arr, target):
+    low = 0
+    high = len(arr) - 1
+    
+    while low <= high:
+        mid = (low + high) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            low = mid        # <-- Bug here?
+        else:
+            high = mid - 1
+            
+    return -1''',
+            options: [
+              'Line 4: while low <= high should be while low < high',
+              'Line 9: low = mid should be low = mid + 1',
+              'Line 11: high = mid - 1 should be high = mid',
+              'Line 5: (low + high) // 2 causes integer overflow',
+            ],
+            correctOptionIndex: 1,
+            explanation: 'When arr[mid] < target, setting `low = mid` without adding 1 prevents the window from shrinking when low == high - 1, causing an infinite loop. The correct assignment is `low = mid + 1`.',
+            points: 50,
+          ),
+          GameQuestion(
+            id: 'q2',
+            title: 'Pointer / Off-by-One in C++',
+            prompt: 'What happens when this reverse string function is executed on `str = "UVCE"`?',
+            codeSnippet: '''void reverse(char* s) {
+    int len = strlen(s);
+    for (int i = 0; i <= len / 2; i++) {
+        char temp = s[i];
+        s[i] = s[len - i];
+        s[len - i] = temp;
+    }
+}''',
+            options: [
+              'Reverses correctly to "ECVU"',
+              'Swaps null terminator \\0 into s[0], corrupting the string',
+              'Segmentation fault on line 2',
+              'Infinite loop in for condition',
+            ],
+            correctOptionIndex: 1,
+            explanation: '`s[len - i]` on the first iteration (i=0) targets `s[len]`, which is the null terminator `\\0`. It should be `s[len - 1 - i]`.',
+            points: 50,
+          ),
+        ],
+      ),
+      const GameModel(
+        id: 'game_algo_race',
+        title: 'Algorithm Race',
+        subtitle: 'Solve time-complexity puzzles',
+        category: GameCategory.cs,
+        difficulty: 'Hard',
+        playerCount: 88,
+        timeLimitSeconds: 90,
+        icon: 'speed',
+      ),
+      const GameModel(
+        id: 'game_ai_quiz',
+        title: 'AI & Neural Trivia',
+        subtitle: 'Test your deep learning instincts',
+        category: GameCategory.ai,
+        difficulty: 'Easy',
+        playerCount: 110,
+        timeLimitSeconds: 45,
+        icon: 'psychology',
+      ),
+      const GameModel(
+        id: 'game_eng_quiz',
+        title: 'Engineering Core Quiz',
+        subtitle: 'Circuits, logic gates, & boolean math',
+        category: GameCategory.engineering,
+        difficulty: 'Medium',
+        playerCount: 65,
+        timeLimitSeconds: 60,
+        icon: 'memory',
+      ),
+    ];
   }
 
   void seedMockDataForTesting() {
@@ -560,100 +657,7 @@ class MockRepository {
     ];
 
     // Technical Games
-    games = [
-      const GameModel(
-        id: 'game_debugger',
-        title: 'Code Debugger',
-        subtitle: 'Find and fix logic errors in 60s',
-        category: GameCategory.coding,
-        difficulty: 'Medium',
-        playerCount: 142,
-        timeLimitSeconds: 60,
-        icon: 'bug_report',
-        questions: [
-          GameQuestion(
-            id: 'q1',
-            title: 'Identify the Memory / Logic Bug',
-            prompt: 'In this Python binary search implementation, which line causes an infinite loop when the target is not present in the array?',
-            codeSnippet: '''def binary_search(arr, target):
-    low = 0
-    high = len(arr) - 1
-    
-    while low <= high:
-        mid = (low + high) // 2
-        if arr[mid] == target:
-            return mid
-        elif arr[mid] < target:
-            low = mid        # <-- Bug here?
-        else:
-            high = mid - 1
-            
-    return -1''',
-            options: [
-              'Line 4: while low <= high should be while low < high',
-              'Line 9: low = mid should be low = mid + 1',
-              'Line 11: high = mid - 1 should be high = mid',
-              'Line 5: (low + high) // 2 causes integer overflow',
-            ],
-            correctOptionIndex: 1,
-            explanation: 'When arr[mid] < target, setting `low = mid` without adding 1 prevents the window from shrinking when low == high - 1, causing an infinite loop. The correct assignment is `low = mid + 1`.',
-            points: 50,
-          ),
-          GameQuestion(
-            id: 'q2',
-            title: 'Pointer / Off-by-One in C++',
-            prompt: 'What happens when this reverse string function is executed on `str = "UVCE"`?',
-            codeSnippet: '''void reverse(char* s) {
-    int len = strlen(s);
-    for (int i = 0; i <= len / 2; i++) {
-        char temp = s[i];
-        s[i] = s[len - i];
-        s[len - i] = temp;
-    }
-}''',
-            options: [
-              'Reverses correctly to "ECVU"',
-              'Swaps null terminator \\0 into s[0], corrupting the string',
-              'Segmentation fault on line 2',
-              'Infinite loop in for condition',
-            ],
-            correctOptionIndex: 1,
-            explanation: '`s[len - i]` on the first iteration (i=0) targets `s[len]`, which is the null terminator `\\0`. It should be `s[len - 1 - i]`.',
-            points: 50,
-          ),
-        ],
-      ),
-      const GameModel(
-        id: 'game_algo_race',
-        title: 'Algorithm Race',
-        subtitle: 'Solve time-complexity puzzles',
-        category: GameCategory.cs,
-        difficulty: 'Hard',
-        playerCount: 88,
-        timeLimitSeconds: 90,
-        icon: 'speed',
-      ),
-      const GameModel(
-        id: 'game_ai_quiz',
-        title: 'AI & Neural Trivia',
-        subtitle: 'Test your deep learning instincts',
-        category: GameCategory.ai,
-        difficulty: 'Easy',
-        playerCount: 110,
-        timeLimitSeconds: 45,
-        icon: 'psychology',
-      ),
-      const GameModel(
-        id: 'game_eng_quiz',
-        title: 'Engineering Core Quiz',
-        subtitle: 'Circuits, logic gates, & boolean math',
-        category: GameCategory.engineering,
-        difficulty: 'Medium',
-        playerCount: 65,
-        timeLimitSeconds: 60,
-        icon: 'memory',
-      ),
-    ];
+    games = _buildDefaultGames();
   }
 
   // Repository Methods
