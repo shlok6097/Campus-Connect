@@ -45,6 +45,17 @@ void main() {
       expect(auth.isClub, true);
       expect(auth.isClubLeader, true);
       expect(auth.currentUser.clubName, 'Coding Club UVCE');
+
+      // Test Profile Update
+      final updateSuccess = await auth.updateProfile(
+        name: 'Rahul Kumar Updated',
+        branch: 'Artificial Intelligence & ML',
+        skills: ['Flutter', 'Python', 'AI/ML'],
+      );
+      expect(updateSuccess, true);
+      expect(auth.currentUser.name, 'Rahul Kumar Updated');
+      expect(auth.currentUser.branch, 'Artificial Intelligence & ML');
+      expect(auth.currentUser.skills.contains('AI/ML'), true);
     });
 
     test('EventController filters and registration flow', () {

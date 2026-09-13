@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/session_service.dart';
+import '../../core/services/supabase_service.dart';
 import '../../data/models/auth_session_model.dart';
 import '../../data/models/user_model.dart';
 import 'club_controller.dart';
@@ -206,6 +208,84 @@ class AuthController extends ChangeNotifier {
     } catch (_) {
       _isLoading = false;
       _errorMessage = 'Unable to send password reset link. Please try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Update user profile details
+  Future<bool> updateProfile({
+    String? name,
+    String? phone,
+    String? studentId,
+    String? branch,
+    int? semester,
+    int? endingYear,
+    String? bio,
+    String? avatarUrl,
+    List<String>? skills,
+    List<String>? lookingFor,
+    bool? isAvailableForTeams,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final updated = currentUser.copyWith(
+        name: name ?? currentUser.name,
+        phone: phone ?? currentUser.phone,
+        studentId: studentId ?? currentUser.studentId,
+        branch: branch ?? currentUser.branch,
+        semester: semester ?? currentUser.semester,
+        endingYear: endingYear ?? currentUser.endingYear,
+        bio: bio ?? currentUser.bio,
+        avatarUrl: avatarUrl ?? currentUser.avatarUrl,
+        skills: skills ?? currentUser.skills,
+        lookingFor: lookingFor ?? currentUser.lookingFor,
+        isAvailableForTeams: isAvailableForTeams ?? currentUser.isAvailableForTeams,
+      );
+
+      final authUser = SupabaseService.instance.isInitialized
+          ? SupabaseService.instance.client.auth.currentUser
+          : null;
+      final userId = (authUser?.id != null && authUser!.id.isNotEmpty)
+          ? authUser.id
+          : currentUser.id;
+
+      if (SupabaseService.instance.isInitialized && userId.isNotEmpty) {
+        final client = SupabaseService.instance.client;
+        final payload = {
+          'full_name': updated.name,
+          'phone': updated.phone,
+          'student_id': updated.studentId,
+          'branch': updated.branch,
+          'semester': updated.semester,
+          'ending_year': updated.endingYear,
+          'bio': updated.bio,
+          'avatar_url': updated.avatarUrl,
+          'skills': updated.skills,
+          'looking_for': updated.lookingFor,
+          'is_available_for_teams': updated.isAvailableForTeams,
+          'updated_at': DateTime.now().toIso8601String(),
+        };
+
+        await client.from('profiles').update(payload).eq('id', userId);
+      }
+
+      _currentUser = updated;
+      if (_currentSession != null) {
+        _currentSession = _currentSession!.copyWith(user: updated);
+        await SessionService.instance.saveSession(_currentSession!);
+      }
+
+      _isLoading = false;
+      _successMessage = 'Profile updated successfully!';
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Failed to update profile: $e';
       notifyListeners();
       return false;
     }

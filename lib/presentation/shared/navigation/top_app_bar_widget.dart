@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../core/constants/asset_constants.dart';
 import '../../../core/theme/app_colors.dart';
@@ -114,6 +115,39 @@ class TopAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
     }
 
     if (showLeadingAvatar) {
+      final imgUrl = avatarUrl ?? AssetConstants.avatarRahul;
+      Widget imageWidget;
+      if (imgUrl.startsWith('data:image')) {
+        try {
+          final bytes = base64Decode(imgUrl.split(',').last);
+          imageWidget = Image.memory(
+            bytes,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const Icon(
+              Icons.person,
+              color: AppColors.blue,
+              size: 20,
+            ),
+          );
+        } catch (_) {
+          imageWidget = const Icon(
+            Icons.person,
+            color: AppColors.blue,
+            size: 20,
+          );
+        }
+      } else {
+        imageWidget = Image.network(
+          imgUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => const Icon(
+            Icons.person,
+            color: AppColors.blue,
+            size: 20,
+          ),
+        );
+      }
+
       return Center(
         child: InkWell(
           onTap: onAvatarTap,
@@ -130,15 +164,7 @@ class TopAppBarWidget extends StatelessWidget implements PreferredSizeWidget {
               color: AppColors.surfaceContainerHigh,
             ),
             clipBehavior: Clip.antiAlias,
-            child: Image.network(
-              avatarUrl ?? AssetConstants.avatarRahul,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => const Icon(
-                Icons.person,
-                color: AppColors.blue,
-                size: 20,
-              ),
-            ),
+            child: imageWidget,
           ),
         ),
       );

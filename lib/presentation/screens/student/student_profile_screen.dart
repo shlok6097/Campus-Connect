@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
@@ -11,6 +12,7 @@ import '../../shared/headers/section_header.dart';
 import '../../state/auth_controller.dart';
 import '../../state/team_controller.dart';
 import '../auth/login_screen.dart';
+import 'edit_student_profile_modal.dart';
 
 class StudentProfileScreen extends StatelessWidget {
   const StudentProfileScreen({super.key});
@@ -160,39 +162,78 @@ class StudentProfileScreen extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.blueLight,
-                  border: Border.all(color: AppColors.outlineVariant, width: 2),
-                ),
-                alignment: Alignment.center,
-                clipBehavior: Clip.antiAlias,
-                child: user.avatarUrl.isNotEmpty
-                    ? Image.network(
-                        user.avatarUrl,
-                        width: 90,
-                        height: 90,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => Text(
-                          user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.blue,
-                          ),
-                        ),
-                      )
-                    : Text(
-                        user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
+              GestureDetector(
+                onTap: () => EditStudentProfileModal.show(context, user: user),
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.blueLight,
+                        border: Border.all(color: AppColors.outlineVariant, width: 2),
+                      ),
+                      alignment: Alignment.center,
+                      clipBehavior: Clip.antiAlias,
+                      child: user.avatarUrl.isNotEmpty
+                          ? (user.avatarUrl.startsWith('data:image')
+                              ? Image.memory(
+                                  base64Decode(user.avatarUrl.split(',').last),
+                                  width: 90,
+                                  height: 90,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => Text(
+                                    user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                                    style: const TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.blue,
+                                    ),
+                                  ),
+                                )
+                              : Image.network(
+                                  user.avatarUrl,
+                                  width: 90,
+                                  height: 90,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => Text(
+                                    user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                                    style: const TextStyle(
+                                      fontSize: 32,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.blue,
+                                    ),
+                                  ),
+                                ))
+                          : Text(
+                              user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
+                              style: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.blue,
+                              ),
+                            ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
                           color: AppColors.blue,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.white, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt,
+                          size: 14,
+                          color: AppColors.white,
                         ),
                       ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(width: AppDimens.md),
               Expanded(
@@ -251,11 +292,7 @@ class StudentProfileScreen extends StatelessWidget {
                   icon: Icons.edit_outlined,
                   backgroundColor: AppColors.blue,
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Profile details are up to date!'),
-                      ),
-                    );
+                    EditStudentProfileModal.show(context, user: user);
                   },
                 ),
               ),
